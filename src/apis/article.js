@@ -10,6 +10,13 @@ export function createArticleAPI (data) {
 export function getChannelAPI () {
   return request ({
     url: '/channels',
-    method: 'Get',
+    method: 'GET',
+  })
+}
+export function getArticleListAPI (data) {
+  return request ({
+    url: '/mp/articles',
+    method: 'GET',
+    data 
   })
 }

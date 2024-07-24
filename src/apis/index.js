@@ -10,6 +10,6 @@ export function loginAPI (formData) {
 export function getProfileAPI () {
   return request ({
     url: '/user/profile',
-    method: 'Get',
+    method: 'GET',
   })
 }
