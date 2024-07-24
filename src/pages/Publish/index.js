@@ -15,10 +15,45 @@ import './index.scss'
 
 import ReactQuill from 'react-quill'
 import 'react-quill/dist/quill.snow.css'
+import { useEffect, useState } from 'react'
+import { getChannelAPI, createArticleAPI } from '@/apis/article'
 
 const { Option } = Select
 
 const Publish = () => {
+  const [ channelList, setChannelList ] = useState([])
+  // 控制图片Type
+  const [imageType, setImageType] = useState(0)
+  // 上传图片
+  const [imageList, setImageList] = useState([])
+  useEffect(()=>{
+    const channelData = async () => {
+      const res = await getChannelAPI()
+      setChannelList(res.data.channels)
+    }
+    channelData()
+  },[])
+  const onFinish = (formValues) => {
+    const { title, content, channel_id } = formValues
+    const repData = {
+      title,
+      content,
+      cover:{
+        type: imageType,
+        images: imageList.map(item=>item.response.data.url)
+      },
+      channel_id
+    }
+    createArticleAPI(repData)
+  }
+
+  const onUploadChange = (info) => {
+    setImageList(info.fileList)
+  }
+    const onTypeChange = (e) => {
+      console.log(e)
+      setImageType(e.target.value)
+    }
   return (
     <div className="publish">
       <Card
@@ -33,7 +68,8 @@ const Publish = () => {
         <Form
           labelCol={{ span: 4 }}
           wrapperCol={{ span: 16 }}
-          initialValues={{ type: 1 }}
+          initialValues={{ type: 0 }}
+          onFinish={onFinish}
         >
           <Form.Item
             label="标题"
@@ -48,9 +84,32 @@ const Publish = () => {
             rules={[{ required: true, message: '请选择文章频道' }]}
           >
             <Select placeholder="请选择文章频道" style={{ width: 400 }}>
-              <Option value={0}>推荐</Option>
+              {channelList.map(item=><Option key={item.id} value={item.id}>{item.name}</Option>)}
             </Select>
           </Form.Item>
+          <Form.Item label="封面">
+            <Form.Item name="type">
+              <Radio.Group onChange={onTypeChange}>
+                <Radio value={1}>单图</Radio>
+                <Radio value={3}>三图</Radio>
+                <Radio value={0}>无图</Radio>
+              </Radio.Group>
+              </Form.Item>
+              { imageType>0 &&<Upload
+                 name="image"
+                 listType="picture-card"
+                 className="avatar-uploader"
+                 showUploadList
+                 action={'http://geek.itheima.net/v1_0/upload'}
+                 onChange={onUploadChange}
+                 maxCount={imageType}
+                 multiple={imageType > 1}
+              >
+                <div style={{ marginTop: 8 }}>
+                  <PlusOutlined />
+                </div>
+              </Upload>}
+            </Form.Item>
           <Form.Item
             label="内容"
             name="content"
