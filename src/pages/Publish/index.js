@@ -15,24 +15,18 @@ import './index.scss'
 
 import ReactQuill from 'react-quill'
 import 'react-quill/dist/quill.snow.css'
-import { useEffect, useState } from 'react'
-import { getChannelAPI, createArticleAPI } from '@/apis/article'
+import { useState } from 'react'
+import { createArticleAPI } from '@/apis/article'
+import { useChannel } from '@/hooks/index'
 
 const { Option } = Select
 
 const Publish = () => {
-  const [ channelList, setChannelList ] = useState([])
+  const { channelList } = useChannel()
   // 控制图片Type
   const [imageType, setImageType] = useState(0)
   // 上传图片
   const [imageList, setImageList] = useState([])
-  useEffect(()=>{
-    const channelData = async () => {
-      const res = await getChannelAPI()
-      setChannelList(res.data.channels)
-    }
-    channelData()
-  },[])
   const onFinish = (formValues) => {
     const { title, content, channel_id } = formValues
     const repData = {
