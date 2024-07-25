@@ -1,10 +1,16 @@
 const path = require('path')
 const { whenProd, getPlugin, pluginByName } = require('@craco/craco')
-module.exports={
-  webpack:{
-    alias:{
+
+module.exports = {
+  // webpack 配置
+  webpack: {
+    // 配置别名
+    alias: {
+      // 约定：使用 @ 表示 src 文件所在路径
       '@': path.resolve(__dirname, 'src')
     },
+    // 配置webpack
+    // 配置CDN
     configure: (webpackConfig) => {
       let cdn = {
         js:[]
@@ -34,7 +40,7 @@ module.exports={
 
       if (isFound) {
         // 找到了HtmlWebpackPlugin的插件
-        match.userOptions.files = cdn
+        match.options.files = cdn
       }
 
       return webpackConfig

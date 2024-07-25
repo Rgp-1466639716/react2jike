@@ -5,9 +5,9 @@ import { createBrowserRouter } from 'react-router-dom'
 import { AuthRoute } from '@/components/AuthRoute'
 import { Suspense, lazy } from 'react'
 
-const Home = lazy((()=>import('@/pages/Home')))
-const Publish = lazy((()=>import('@/pages/Publish')))
-const Artical = lazy((()=>import('@/pages/Artical')))
+const Home = lazy(()=>import('@/pages/Home'))
+const Publish = lazy(()=>import('@/pages/Publish'))
+const Artical = lazy(()=>import('@/pages/Artical'))
 
 const router = createBrowserRouter([
   {
