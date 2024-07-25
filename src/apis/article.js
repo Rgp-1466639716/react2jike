@@ -13,10 +13,16 @@ export function getChannelAPI () {
     method: 'GET',
   })
 }
-export function getArticleListAPI (data) {
+export function delArticleAPI (id) {
+  return request ({
+    url: `/mp/articles/${id}`,
+    method: 'DELETE',
+  })
+}
+export function getArticleListAPI (params) {
   return request ({
     url: '/mp/articles',
     method: 'GET',
-    data 
+    params 
   })
 }

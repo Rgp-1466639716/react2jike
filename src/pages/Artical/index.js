@@ -1,17 +1,19 @@
 import { Link } from 'react-router-dom'
-import { Card, Breadcrumb, Form, Button, Radio, DatePicker, Select } from 'antd'
+import { Card, Breadcrumb, Form, Button, Radio, DatePicker, Select, Popconfirm } from 'antd'
 import locale from 'antd/es/date-picker/locale/zh_CN'
 import { Table, Tag, Space } from 'antd'
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import img404 from '@/assets/error.png'
 import { useChannel } from '@/hooks'
 import { useEffect, useState } from 'react'
-import { getArticleListAPI } from '@/apis/article'
+import { getArticleListAPI, delArticleAPI } from '@/apis/article'
+import { useNavigate } from 'react-router-dom'
 
 const { Option } = Select
 const { RangePicker } = DatePicker
 
 const Article = () => {
+  const navagite = useNavigate()
   const { channelList } = useChannel()
   const status = {
     2:<Tag color="green">审核通过</Tag>,
@@ -59,13 +61,25 @@ const Article = () => {
       render: data => {
         return (
           <Space size="middle">
-            <Button type="primary" shape="circle" icon={<EditOutlined />} />
-            <Button
-              type="primary"
-              danger
-              shape="circle"
-              icon={<DeleteOutlined />}
+            <Button 
+              type="primary" 
+              shape="circle" 
+              icon={<EditOutlined />} 
+              onClick={() => navagite(`/publish?id=${data.id}`)} 
             />
+            <Popconfirm
+              title="确认删除该条文章吗?"
+              onConfirm={() => delArticle(data)}
+              okText="确认"
+              cancelText="取消"
+            >
+              <Button
+                type="primary"
+                danger
+                shape="circle"
+                icon={<DeleteOutlined />}
+              />
+            </Popconfirm>
           </Space>
         )
       }
@@ -73,14 +87,49 @@ const Article = () => {
   ]
   const [list,setList] = useState([])
   const [count,setCount] = useState(0)
+  const [params, setParams] = useState({
+    page: 1,
+    per_page: 4,
+    begin_pubdate: null,
+    end_pubdate: null,
+    status: null,
+    channel_id: null
+  })
   useEffect(()=>{
     const ass = async()=>{
-      const res = await getArticleListAPI()
+      const res = await getArticleListAPI(params)
       setList(res.data.results)
       setCount(res.data.total_count)
     }
     ass()
-  },[])
+  },[params])
+
+  // 筛选文章列表
+  const onFinish = async (formValue) => {
+    // 1. 准备参数
+    const { channel_id, date, status } = formValue
+    setParams({
+      ...params,
+      status,
+      channel_id,
+      begin_pubdate: date[0].format('YYYY-MM-DD'),
+      end_pubdate: date[1].format('YYYY-MM-DD'),
+    })
+  }
+  const onPageChange = (page) => {
+    // 拿到当前页参数 修改params 引起接口更新
+    setParams({
+      ...params,
+      page
+    })
+  }
+  const delArticle = async (data) => {
+    await delArticleAPI(data.id)
+    // 更新列表
+    setParams({
+      ...params
+    })
+  }
   return (
     <div>
       <Card
@@ -92,7 +141,7 @@ const Article = () => {
         }
         style={{ marginBottom: 20 }}
       >
-        <Form initialValues={{ status: '' }}>
+        <Form initialValues={{ status: '' }} onFinish={onFinish}>
           <Form.Item label="状态" name="status">
             <Radio.Group>
               <Radio value={''}>全部</Radio>
@@ -124,7 +173,12 @@ const Article = () => {
         </Form>
       </Card>
       <Card title={`根据筛选条件共查询到 ${count}条结果：`}>
-        <Table rowKey="id" columns={columns} dataSource={list} />
+        <Table rowKey="id" columns={columns} dataSource={list} pagination={{
+        current: params.page,
+        pageSize: params.per_page,
+        onChange: onPageChange,
+        total: count
+    }} />
       </Card>
     </div>
   )
