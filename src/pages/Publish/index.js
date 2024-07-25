@@ -10,13 +10,13 @@ import {
   Select
 } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import './index.scss'
 
 import ReactQuill from 'react-quill'
 import 'react-quill/dist/quill.snow.css'
-import { useState } from 'react'
-import { createArticleAPI } from '@/apis/article'
+import { useEffect, useState } from 'react'
+import { createArticleAPI, getArticleById, updateArticleAPI } from '@/apis/article'
 import { useChannel } from '@/hooks/index'
 
 const { Option } = Select
@@ -34,27 +34,56 @@ const Publish = () => {
       content,
       cover:{
         type: imageType,
-        images: imageList.map(item=>item.response.data.url)
+        images: imageList.map(item=>{
+          if(item.response){
+            return item.response.data.url
+          }else{
+            return item.url
+          }
+        })
       },
       channel_id
     }
-    createArticleAPI(repData)
+    if(articleId){
+      updateArticleAPI({...repData,id:articleId})
+    }else{
+      createArticleAPI(repData)
+    }
   }
 
   const onUploadChange = (info) => {
+    console.log(1232321,info)
     setImageList(info.fileList)
   }
-    const onTypeChange = (e) => {
-      console.log(e)
-      setImageType(e.target.value)
+  const onTypeChange = (e) => {
+    setImageType(e.target.value)
+  }
+  const [ searchParams ] = useSearchParams()
+  const articleId = searchParams.get('id')
+  const [ form ] = Form.useForm()
+  useEffect(()=>{
+    async function ads (){
+      const res = await getArticleById(articleId)
+      form.setFieldsValue({
+        ...res.data,
+        type:res.data.cover.type,
+      })
+      setImageType(res.data.cover.type)
+      setImageList(res.data.cover.images.map(url=>{
+        return {url}
+      }))
     }
+    if(articleId){
+      ads()
+    }
+  },[articleId, form])
   return (
     <div className="publish">
       <Card
         title={
           <Breadcrumb items={[
             { title: <Link to={'/'}>首页</Link> },
-            { title: '发布文章' },
+            { title: `${articleId}`?'编辑文章':'发布文章' },
           ]}
           />
         }
@@ -64,6 +93,7 @@ const Publish = () => {
           wrapperCol={{ span: 16 }}
           initialValues={{ type: 0 }}
           onFinish={onFinish}
+          form={form}
         >
           <Form.Item
             label="标题"
@@ -95,6 +125,7 @@ const Publish = () => {
                  className="avatar-uploader"
                  showUploadList
                  action={'http://geek.itheima.net/v1_0/upload'}
+                 fileList={imageList}
                  onChange={onUploadChange}
                  maxCount={imageType}
                  multiple={imageType > 1}
